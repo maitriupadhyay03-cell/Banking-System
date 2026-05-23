@@ -1,0 +1,206 @@
+﻿{% extends 'base.html' %}
+{% block title %}Admin Panel — NexaBank{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Admin Panel</h1>
+    <p>Manage users, accounts, loans, and branches</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_users }}</div>
+        <div class="stat-label">Customers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_accounts }}</div>
+        <div class="stat-label">Accounts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_transactions }}</div>
+        <div class="stat-label">Transactions</div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-value">{{ stats.pending_loans }}</div>
+        <div class="stat-label">Pending Loans</div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-value">₹{{ "%.2f" | format(stats.total_deposits) }}</div>
+        <div class="stat-label">Total Deposited</div>
+    </div>
+</div>
+
+<!-- Pending loans -->
+<div class="section">
+    <h2>Pending Loan Applications</h2>
+    {% if pending_loans %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Account</th>
+                    <th>Amount</th>
+                    <th>Rate</th>
+                    <th>Applied</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in pending_loans %}
+                <tr>
+                    <td>#{{ loan.id }}</td>
+                    <td>
+                        {{ loan.name }}<br>
+                        <small class="text-muted">{{ loan.email }}</small>
+                    </td>
+                    <td>{{ loan.account_number }}</td>
+                    <td>₹{{ "%.2f" | format(loan.amount) }}</td>
+                    <td>{{ loan.interest_rate }}%</td>
+                    <td>{{ loan.applied_at[:10] }}</td>
+                    <td style="white-space:nowrap">
+                        <form method="POST"
+                              action="{{ url_for('approve_loan', loan_id=loan.id) }}"
+                              style="display:inline">
+                            <button class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST"
+                              action="{{ url_for('reject_loan', loan_id=loan.id) }}"
+                              style="display:inline; margin-left:6px">
+                            <button class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No pending loan applications.</div>
+    {% endif %}
+</div>
+
+<!-- Account summary from DB view -->
+<div class="section">
+    <h2>Account Summary <small class="text-muted" style="font-size:13px;font-weight:400">(from DB View)</small></h2>
+    {% if account_summary %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Account Number</th>
+                    <th>Type</th>
+                    <th>Balance</th>
+                    <th>Transactions</th>
+                    <th>Opened</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in account_summary %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td style="font-family:monospace">{{ row.account_number }}</td>
+                    <td>{{ row.account_type | capitalize }}</td>
+                    <td>₹{{ "%.2f" | format(row.balance) }}</td>
+                    <td>{{ row.transaction_count }}</td>
+                    <td>{{ row.account_created[:10] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No accounts yet.</div>
+    {% endif %}
+</div>
+
+<!-- Create account for customer -->
+<div class="section">
+    <h2>Create Account for Customer</h2>
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('create_account') }}" class="form-body">
+            <div class="form-group">
+                <label for="user_id">Customer</label>
+                <select id="user_id" name="user_id" required>
+                    {% for user in all_users %}
+                    <option value="{{ user.id }}">
+                        {{ user.name }} — {{ user.email }}
+                        ({{ user.account_count }} account{{ 's' if user.account_count != 1 }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:160px">
+                    <label for="account_type">Account Type</label>
+                    <select id="account_type" name="account_type">
+                        <option value="savings">Savings</option>
+                        <option value="current">Current</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;min-width:160px">
+                    <label for="initial_balance">Initial Deposit (INR)</label>
+                    <div class="input-prefix">
+                        <span class="prefix">₹</span>
+                        <input type="number" id="initial_balance" name="initial_balance"
+                               min="0" step="0.01" value="0" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Teller Account -->
+<div class="section">
+    <h2>Create Teller Account</h2>
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('create_teller') }}" class="form-body">
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:160px">
+                    <label>Full Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Alice Smith">
+                </div>
+                <div class="form-group" style="flex:1;min-width:160px">
+                    <label>Email</label>
+                    <input type="email" name="email" required placeholder="teller@bank.com">
+                </div>
+                <div class="form-group" style="flex:1;min-width:140px">
+                    <label>Password</label>
+                    <input type="password" name="password" required placeholder="Min. 6 chars">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create Teller</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Branches -->
+<div class="section">
+    <h2>Bank Branches</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr><th>Branch</th><th>Location</th><th>Manager</th><th>Phone</th></tr>
+            </thead>
+            <tbody>
+                {% for branch in branches %}
+                <tr>
+                    <td>{{ branch.name }}</td>
+                    <td>{{ branch.location }}</td>
+                    <td>{{ branch.manager }}</td>
+                    <td>{{ branch.phone }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

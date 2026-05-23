@@ -1,0 +1,47 @@
+﻿{% extends 'base.html' %}
+{% block title %}Transfer — NexaBank{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Transfer Funds</h1>
+    <p>Send money to any NexaBank account</p>
+</div>
+<div class="form-card">
+    <form method="POST" class="form-body">
+        <div class="form-group">
+            <label for="from_account_id">From Account</label>
+            <select id="from_account_id" name="from_account_id" required>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">
+                    {{ account.account_number }}
+                    ({{ account.account_type | capitalize }})
+                    — ₹{{ "%.2f" | format(account.balance) }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="to_account_number">To Account Number</label>
+            <input type="text" id="to_account_number" name="to_account_number"
+                   required placeholder="ACCxxxxxxxx" maxlength="11"
+                   style="font-family: 'Courier New', monospace; letter-spacing: .05em;">
+        </div>
+        <div class="form-group">
+            <label for="amount">Amount (INR)</label>
+            <div class="input-prefix">
+                <span class="prefix">₹</span>
+                <input type="number" id="amount" name="amount"
+                       min="0.01" step="0.01" required placeholder="0.00">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="description">Description (optional)</label>
+            <input type="text" id="description" name="description"
+                   placeholder="e.g. Rent, Shared expenses...">
+        </div>
+        <div class="form-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">Transfer Funds</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

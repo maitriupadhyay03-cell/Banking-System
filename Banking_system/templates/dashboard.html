@@ -1,0 +1,107 @@
+﻿{% extends 'base.html' %}
+{% block title %}Dashboard — NexaBank{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Welcome back, {{ session.name }}!</p>
+</div>
+
+<!-- Account cards -->
+<div class="account-cards">
+    {% for account in accounts %}
+    <div class="account-card">
+        <div class="account-card-header">
+            <span class="account-type-badge">{{ account.account_type | capitalize }}</span>
+            <span class="account-number">{{ account.account_number }}</span>
+        </div>
+        <div class="balance">₹{{ "%.2f" | format(account.balance) }}</div>
+        <div class="balance-label">Available Balance</div>
+        <div class="account-actions">
+            <a href="{{ url_for('deposit') }}"  class="btn btn-sm btn-success">Deposit</a>
+            <a href="{{ url_for('transfer') }}" class="btn btn-sm btn-primary">Transfer</a>
+        </div>
+        <p style="font-size:12px;color:var(--dimmed);margin-top:10px">
+            For cash withdrawals, please visit a branch.
+        </p>
+    </div>
+    {% else %}
+    <div class="empty-state">No accounts found. Please contact the admin.</div>
+    {% endfor %}
+</div>
+
+<!-- Active loans -->
+{% if loans %}
+<div class="section">
+    <h2>My Loans <a href="{{ url_for('loans') }}" class="view-all">Apply / View All</a></h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>Amount</th>
+                    <th>Rate</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Applied</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in loans %}
+                <tr>
+                    <td>{{ loan.account_number }}</td>
+                    <td>₹{{ "%.2f" | format(loan.amount) }}</td>
+                    <td>{{ loan.interest_rate }}%</td>
+                    <td><span class="badge badge-{{ loan.status }}">{{ loan.status | capitalize }}</span></td>
+                    <td>{{ loan.due_date or '—' }}</td>
+                    <td>{{ loan.applied_at[:10] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent transactions -->
+<div class="section">
+    <h2>Recent Transactions <a href="{{ url_for('history') }}" class="view-all">View All</a></h2>
+    {% if recent_tx %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance After</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in recent_tx %}
+                <tr>
+                    <td>{{ tx.created_at[:16] }}</td>
+                    <td>{{ tx.account_number }}</td>
+                    <td>
+                        <span class="badge badge-{{ tx.type }}">
+                            {{ tx.type | replace('_', ' ') | title }}
+                        </span>
+                    </td>
+                    <td class="{{ 'amount-in' if tx.type in ['deposit', 'transfer_in'] else 'amount-out' }}">
+                        {{ '+' if tx.type in ['deposit', 'transfer_in'] else '-' }}₹{{ "%.2f" | format(tx.amount) }}
+                    </td>
+                    <td>₹{{ "%.2f" | format(tx.balance_after) }}</td>
+                    <td>{{ tx.description or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        No transactions yet. <a href="{{ url_for('deposit') }}">Make your first deposit!</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

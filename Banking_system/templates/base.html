@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NexaBank{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+{% if session.user_id %}
+<!-- ── Authenticated layout (sidebar + main) ─────────────────────────────── -->
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">🏦</span>
+            <span class="brand-name">NexaBank</span>
+        </div>
+        <nav class="sidebar-nav">
+            {% if session.role == 'admin' %}
+            <a href="{{ url_for('admin_panel') }}"
+               class="nav-link {% if request.endpoint == 'admin_panel' %}active{% endif %}">
+                <span class="nav-icon">⚙</span> Admin Panel
+            </a>
+            {% elif session.role == 'teller' %}
+            <a href="{{ url_for('teller_panel') }}"
+               class="nav-link {% if request.endpoint == 'teller_panel' %}active{% endif %}">
+                <span class="nav-icon">🪟</span> Teller Window
+            </a>
+            {% else %}
+            <a href="{{ url_for('dashboard') }}"
+               class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <span class="nav-icon">⬛</span> Dashboard
+            </a>
+            <a href="{{ url_for('deposit') }}"
+               class="nav-link {% if request.endpoint == 'deposit' %}active{% endif %}">
+                <span class="nav-icon">↓</span> Deposit
+            </a>
+            <a href="{{ url_for('transfer') }}"
+               class="nav-link {% if request.endpoint == 'transfer' %}active{% endif %}">
+                <span class="nav-icon">⇄</span> Transfer
+            </a>
+            <a href="{{ url_for('history') }}"
+               class="nav-link {% if request.endpoint == 'history' %}active{% endif %}">
+                <span class="nav-icon">≡</span> History
+            </a>
+            <a href="{{ url_for('loans') }}"
+               class="nav-link {% if request.endpoint == 'loans' %}active{% endif %}">
+                <span class="nav-icon">₹</span> Loans
+            </a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ session.name[0].upper() }}</div>
+                <div>
+                    <div class="user-name">{{ session.name }}</div>
+                    <div class="user-role">{{ session.role | capitalize }}</div>
+                </div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </aside>
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{% else %}
+<!-- ── Unauthenticated layout (centered card) ─────────────────────────────── -->
+<div class="auth-layout">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container auth-flash">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% block auth_content %}{% endblock %}
+</div>
+{% endif %}
+
+</body>
+</html>
