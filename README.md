@@ -37,8 +37,8 @@ There are three types of users:
 
 **1. Clone the repo**
 ```
-git clone https://github.com/your-username/Banking_system.git
-cd Banking_system
+git clone https://github.com/maitriupadhyay03-cell/Banking-System.git
+cd Banking-System/Banking_system
 ```
 
 **2. Install dependencies**
